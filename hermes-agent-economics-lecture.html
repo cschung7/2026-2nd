@@ -1,0 +1,1962 @@
+<!doctype html>
+<html lang="ko" data-visualize-standalone>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>경제학·재무경제를 위한 Hermes Agent</title>
+<style>:root {
+  color-scheme: light dark;
+  background-color: transparent !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: var(
+    --main-surface-primary,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --foreground: light-dark(rgb(26 28 31), rgb(255 255 255));
+  --card: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --card-foreground: var(--foreground);
+  --popover: light-dark(rgb(255 255 255), rgb(45 45 45));
+  --popover-foreground: var(--foreground);
+  --primary: light-dark(rgb(51 156 255), rgb(131 195 255));
+  --primary-foreground: light-dark(rgb(255 255 255), rgb(13 13 13));
+  --secondary: light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%));
+  --secondary-foreground: var(--foreground);
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: light-dark(
+    rgb(26 28 31 / 49.4%),
+    rgb(255 255 255 / 49.8%)
+  );
+  --accent: light-dark(rgb(229 242 255), rgb(13 39 63));
+  --accent-foreground: var(--primary);
+  --destructive: light-dark(rgb(226 85 7), rgb(255 133 73));
+  --border: light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%));
+  --input: light-dark(
+    rgb(26 28 31 / 11.8%),
+    color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+  );
+  --ring: light-dark(rgb(51 156 255), rgb(131 195 255 / 76%));
+  --font-size-base: 14px;
+  --red: light-dark(rgb(186 38 35), rgb(250 66 62));
+  --green: light-dark(rgb(0 162 64), rgb(64 201 119));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, "Segoe UI", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --radius: 10px;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 17 17'%3E%3Cpath d='M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z'/%3E%3C/svg%3E");
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+  --color-background-primary: var(--background);
+  --color-text-primary: var(--foreground);
+  --color-border-secondary: var(--border);
+}
+
+:root[data-visualize-standalone] {
+  background-color: var(--background) !important;
+}
+
+/* Generic mobile code-block hosts provide light/dark mode but no series palette.
+   AppBlock hosts set all six variables themselves. */
+:root:not([data-app-block-surface]) {
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(#f3883b, #f59a56);
+  --viz-series-3: light-dark(#5dc977, #74d58b);
+  --viz-series-4: light-dark(#eb77b1, #f08fc0);
+  --viz-series-5: light-dark(#9b79ec, #aa91ef);
+  --viz-series-6: light-dark(#3ab9b1, #5acbc2);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html > body {
+  margin: 0;
+  padding: 5px;
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+:root:not([data-app-block-surface]) > body {
+  padding: 12px;
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+}
+
+.table :is(th, td) {
+  padding-block: 10px;
+  padding-inline: 0 24px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table-responsive > .table :is(th, td) {
+  overflow-wrap: break-word;
+}
+
+.table :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.table :is(caption, thead th) {
+  font-weight: 600;
+}
+
+.table thead th {
+  padding-block: 8px;
+  border-bottom-color: color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+
+.table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+.table.table-sm :is(th, td) {
+  padding-block: 6px;
+}
+
+.table.table-sm :is(th, td):not(:last-child) {
+  padding-inline-end: 16px;
+}
+
+.table :is(.text-end, [align="right"]) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.table :is(.text-center, [align="center"]) {
+  text-align: center;
+}
+
+.table .text-nowrap {
+  white-space: nowrap;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget > :not(.card) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* The bundled tooltip runtime owns [data-tooltip]. AppBlock's CSS-only
+   pseudo-tooltip can widen dense grids even while hidden. */
+main [data-tooltip]::after {
+  content: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls > .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls > .form-label > :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--interactive-label-primary-default, var(--primary-foreground));
+  background: var(--interactive-bg-primary-default, var(--foreground));
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(
+    in srgb,
+    var(--interactive-label-primary-default, var(--primary-foreground)) 50%,
+    transparent
+  );
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type="file"] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type="file"]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type="file"]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type="color"] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type="checkbox"] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type="checkbox"]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type="checkbox"]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: "";
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type="radio"] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type="radio"]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: "";
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+    [aria-pressed="true"],
+    [aria-selected="true"],
+    .is-selected
+  ) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed="true"], [aria-selected="true"], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget > svg {
+  width: 100%;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+</style>
+</head>
+<body>
+<style>
+  #hermes-econ-deck {
+    color: var(--foreground);
+    background: var(--background);
+    width: 100%;
+    position: relative;
+  }
+
+  #hermes-econ-deck * { box-sizing: border-box; }
+
+  #hermes-econ-deck .slide h1 {
+    font-size: clamp(3rem, 6vw, 5.6rem);
+    font-weight: 500;
+    margin: 0.4rem 0;
+  }
+
+  #hermes-econ-deck .slide h2 {
+    font-size: clamp(2rem, 4.2vw, 3.8rem);
+    font-weight: 500;
+    margin: 0 0 1.6rem;
+  }
+
+  #hermes-econ-deck .slide h3 {
+    font-size: clamp(1.15rem, 2vw, 1.6rem);
+    font-weight: 500;
+  }
+
+  #hermes-econ-deck .slide p,
+  #hermes-econ-deck .slide li,
+  #hermes-econ-deck .slide td,
+  #hermes-econ-deck .slide th {
+    font-size: clamp(1rem, 1.35vw, 1.3rem);
+  }
+
+  #hermes-econ-deck .deckbar {
+    display: grid;
+    grid-template-columns: auto minmax(8rem, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #hermes-econ-deck .deckbar-group,
+  #hermes-econ-deck .deck-actions,
+  #hermes-econ-deck .choice-row,
+  #hermes-econ-deck .step-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  #hermes-econ-deck .deck-progress {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  #hermes-econ-deck progress { width: 100%; }
+
+  #hermes-econ-deck .slide {
+    display: none;
+    min-height: 38rem;
+    padding: 2.4rem 3rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #hermes-econ-deck .slide.is-active {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    animation: hermes-slide-in 180ms ease-out;
+  }
+
+  #hermes-econ-deck .slide-top {
+    position: absolute;
+    top: 1.1rem;
+    left: 3rem;
+    right: 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    color: var(--muted-foreground);
+  }
+
+  #hermes-econ-deck .slide-footer {
+    position: absolute;
+    bottom: 0.8rem;
+    left: 3rem;
+    right: 3rem;
+    color: var(--muted-foreground);
+  }
+
+  #hermes-econ-deck .eyebrow {
+    color: var(--muted-foreground);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  #hermes-econ-deck .accent-line {
+    width: 5rem;
+    height: 0.28rem;
+    background: var(--viz-series-1);
+    margin: 1rem 0 1.4rem;
+  }
+
+  #hermes-econ-deck .hero-copy { max-width: 58rem; }
+
+  #hermes-econ-deck .lead {
+    max-width: 58rem;
+    color: var(--muted-foreground);
+    font-size: clamp(1.1rem, 1.8vw, 1.55rem);
+  }
+
+  #hermes-econ-deck .two-col {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2.2rem;
+    align-items: start;
+  }
+
+  #hermes-econ-deck .three-col {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  #hermes-econ-deck .split-visual {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 2.5rem;
+    align-items: center;
+  }
+
+  #hermes-econ-deck .big-claim {
+    border-left: 0.35rem solid var(--viz-series-1);
+    padding-left: 1.2rem;
+    max-width: 62rem;
+  }
+
+  #hermes-econ-deck .compare-block {
+    padding: 1rem 0;
+    border-top: 1px solid var(--border);
+  }
+
+  #hermes-econ-deck .compare-block:first-child { border-top: 0; }
+
+  #hermes-econ-deck .flow {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: center;
+    gap: 0.6rem;
+    margin: 1.4rem 0;
+  }
+
+  #hermes-econ-deck .flow-node {
+    padding: 0.9rem 0.7rem;
+    text-align: center;
+    border-bottom: 0.28rem solid var(--border);
+    background: color-mix(in srgb, var(--muted) 55%, transparent);
+  }
+
+  #hermes-econ-deck .flow-node.is-current {
+    border-bottom-color: var(--viz-series-1);
+    background: color-mix(in srgb, var(--viz-series-1) 14%, transparent);
+  }
+
+  #hermes-econ-deck .layer-stack {
+    display: grid;
+    gap: 0.55rem;
+    max-width: 46rem;
+    margin: 1.4rem auto 0;
+  }
+
+  #hermes-econ-deck .layer {
+    padding: 0.85rem 1rem;
+    border-left: 0.32rem solid var(--viz-series-1);
+    background: color-mix(in srgb, var(--muted) 55%, transparent);
+  }
+
+  #hermes-econ-deck .layer:nth-child(2) { border-left-color: var(--viz-series-2); }
+  #hermes-econ-deck .layer:nth-child(3) { border-left-color: var(--viz-series-3); }
+  #hermes-econ-deck .layer:nth-child(4) { border-left-color: var(--viz-series-4); }
+
+  #hermes-econ-deck .term-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+    margin: 1rem 0;
+  }
+
+  #hermes-econ-deck .detail-line {
+    min-height: 5.5rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  #hermes-econ-deck .timeline {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin: 1.5rem 0;
+  }
+
+  #hermes-econ-deck .timeline-item {
+    border-top: 0.3rem solid var(--viz-series-1);
+    padding-top: 0.75rem;
+  }
+
+  #hermes-econ-deck .timeline-item:nth-child(2n) { border-top-color: var(--viz-series-2); }
+
+  #hermes-econ-deck .fragment {
+    opacity: 0.08;
+    transform: translateY(0.25rem);
+    transition: opacity 160ms ease-out, transform 160ms ease-out;
+  }
+
+  #hermes-econ-deck .fragment.is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  #hermes-econ-deck .quiz-feedback {
+    min-height: 5.2rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  #hermes-econ-deck .risk-list {
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  #hermes-econ-deck .risk-row {
+    display: grid;
+    grid-template-columns: minmax(10rem, 0.8fr) minmax(0, 1.7fr);
+    gap: 1rem;
+    align-items: baseline;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #hermes-econ-deck .rubric-bar {
+    display: grid;
+    grid-template-columns: minmax(10rem, 0.8fr) minmax(0, 2fr) auto;
+    gap: 0.8rem;
+    align-items: center;
+    margin: 0.8rem 0;
+  }
+
+  #hermes-econ-deck .rubric-track {
+    height: 0.65rem;
+    background: var(--muted);
+  }
+
+  #hermes-econ-deck .rubric-fill {
+    height: 100%;
+    background: var(--viz-series-1);
+  }
+
+  #hermes-econ-deck .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    max-height: 30rem;
+    overflow-y: auto;
+  }
+
+  #hermes-econ-deck dialog { max-width: 58rem; width: min(94%, 58rem); }
+
+  #hermes-econ-deck .source-list { columns: 2; column-gap: 2rem; }
+  #hermes-econ-deck .source-list li { break-inside: avoid; margin-bottom: 0.75rem; }
+
+  @keyframes hermes-slide-in {
+    from { opacity: 0; transform: translateX(0.35rem); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #hermes-econ-deck .slide.is-active { animation: none; }
+    #hermes-econ-deck .fragment { transition: none; }
+  }
+
+  @media (max-width: 736px) {
+    #hermes-econ-deck .deckbar { grid-template-columns: 1fr auto; }
+    #hermes-econ-deck .deck-progress { grid-column: 1 / -1; grid-row: 2; }
+    #hermes-econ-deck .slide { min-height: 46rem; padding: 3.5rem 1rem 2.8rem; }
+    #hermes-econ-deck .slide-top { left: 1rem; right: 1rem; }
+    #hermes-econ-deck .slide-footer { left: 1rem; right: 1rem; }
+    #hermes-econ-deck .two-col,
+    #hermes-econ-deck .three-col,
+    #hermes-econ-deck .split-visual { grid-template-columns: 1fr; gap: 1rem; }
+    #hermes-econ-deck .flow { grid-template-columns: 1fr; }
+    #hermes-econ-deck .timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #hermes-econ-deck .term-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #hermes-econ-deck .risk-row,
+    #hermes-econ-deck .rubric-bar { grid-template-columns: 1fr; gap: 0.35rem; }
+    #hermes-econ-deck .overview-grid { grid-template-columns: 1fr; }
+    #hermes-econ-deck .source-list { columns: 1; }
+  }
+</style>
+
+<div id="hermes-econ-deck" aria-label="경제학과 재무경제학을 위한 Hermes Agent 강의 슬라이드">
+  <header class="deckbar" aria-label="슬라이드 탐색">
+    <div class="deckbar-group">
+      <button type="button" class="btn btn-ghost" id="hermesOverviewBtn" aria-label="전체 목차 열기">목차</button>
+      <button type="button" class="btn btn-ghost" id="hermesRevealBtn">단계 표시</button>
+    </div>
+    <div class="deck-progress">
+      <progress id="hermesProgress" max="23" value="1" aria-label="슬라이드 진행률"></progress>
+      <span id="hermesCounter" class="text-small text-muted">1 / 23</span>
+    </div>
+    <div class="deck-actions">
+      <button type="button" class="btn" id="hermesPrevBtn">이전</button>
+      <button type="button" class="btn btn-primary" id="hermesNextBtn">다음</button>
+    </div>
+  </header>
+
+  <main id="hermesSlides">
+    <section class="slide is-active" data-title="Hermes Agent와 경제·금융 연구">
+      <div class="slide-top text-small"><span>AI Finance Seminar</span><span>01</span></div>
+      <div class="hero-copy">
+        <div class="eyebrow text-small">Hermes Agent Fundamentals</div>
+        <h1>경제학·재무경제 연구를<br>Agentic Workflow로 바꾸기</h1>
+        <div class="accent-line" aria-hidden="true"></div>
+        <p class="lead">답변을 생성하는 AI를 넘어, 자료를 찾고 계산하고 검증하며 다음 행동까지 연결하는 연구 시스템을 설계한다.</p>
+      </div>
+      <div class="slide-footer text-small">키보드: ← → 이동 · Space 단계 표시 · O 목차</div>
+    </section>
+
+    <section class="slide" data-title="답변이 아니라 작업의 완결성이 목표다">
+      <div class="slide-top text-small"><span>왜 Agent인가</span><span>02</span></div>
+      <h2>좋은 문장이 아니라 작업의 완결성이 목표다</h2>
+      <div class="two-col">
+        <div>
+          <h3>Chatbot</h3>
+          <div class="compare-block">질문에 답한다</div>
+          <div class="compare-block fragment">주어진 context 안에서 추론한다</div>
+          <div class="compare-block fragment">대화가 끝나면 작업도 끝난다</div>
+        </div>
+        <div>
+          <h3>Agent</h3>
+          <div class="compare-block">목표를 받아 행동한다</div>
+          <div class="compare-block fragment">도구로 자료·코드·환경을 사용한다</div>
+          <div class="compare-block fragment">결과를 관찰하고 수정하며 완료한다</div>
+        </div>
+      </div>
+      <div class="slide-footer text-small">핵심 질문: “무엇을 말했는가?”보다 “무엇을 완료했고 어떻게 검증했는가?”</div>
+    </section>
+
+    <section class="slide" data-title="수업의 네 가지 학습 목표">
+      <div class="slide-top text-small"><span>학습 목표</span><span>03</span></div>
+      <h2>수업이 끝나면 네 가지를 할 수 있어야 한다</h2>
+      <div class="two-col">
+        <div class="big-claim">
+          <h3>1. 구조를 설명한다</h3>
+          <p>Model, tool, memory, skill, profile, subagent를 구분한다.</p>
+        </div>
+        <div class="big-claim fragment">
+          <h3>2. 연구를 실행한다</h3>
+          <p>공식 자료 수집부터 계산·보고서까지 한 workflow로 연결한다.</p>
+        </div>
+        <div class="big-claim fragment">
+          <h3>3. 분업을 설계한다</h3>
+          <p>전문 agent의 비교우위와 검증 책임을 배치한다.</p>
+        </div>
+        <div class="big-claim fragment">
+          <h3>4. 실패를 판정한다</h3>
+          <p>오류·편향·권한·재현성 문제를 evidence로 감사한다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Agent loop가 모든 기능의 중심이다">
+      <div class="slide-top text-small"><span>Agent Loop</span><span>04</span></div>
+      <h2>Agent loop가 모든 기능의 중심이다</h2>
+      <div class="flow" aria-label="목표에서 검증까지의 반복 과정">
+        <div class="flow-node is-current" data-loop-node="0">목표</div>
+        <div class="flow-node" data-loop-node="1">추론</div>
+        <div class="flow-node" data-loop-node="2">도구 실행</div>
+        <div class="flow-node" data-loop-node="3">결과 관찰</div>
+        <div class="flow-node" data-loop-node="4">검증·수정</div>
+      </div>
+      <div class="step-row" aria-label="Agent loop 단계 선택">
+        <button type="button" class="btn btn-primary" data-loop-step="0">1 목표</button>
+        <button type="button" class="btn" data-loop-step="1">2 추론</button>
+        <button type="button" class="btn" data-loop-step="2">3 실행</button>
+        <button type="button" class="btn" data-loop-step="3">4 관찰</button>
+        <button type="button" class="btn" data-loop-step="4">5 검증</button>
+      </div>
+      <div id="hermesLoopDetail" class="detail-line" aria-live="polite"><strong>목표:</strong> “한국은행의 최근 금리결정을 분석하라”를 검증 가능한 완료 조건으로 바꾼다.</div>
+      <div class="slide-footer text-small">Agent는 한 번의 추론이 아니라, 관찰을 받아 반복하는 control loop다.</div>
+    </section>
+
+    <section class="slide" data-title="Hermes는 모델 위에 실행 구조를 더한다">
+      <div class="slide-top text-small"><span>Hermes Architecture</span><span>05</span></div>
+      <h2>Hermes는 모델 위에 실행 구조를 더한다</h2>
+      <div class="layer-stack" aria-label="Hermes Agent 계층 구조">
+        <div class="layer"><strong>Channels</strong> · CLI, Desktop, messaging, gateway</div>
+        <div class="layer fragment"><strong>Agent Core</strong> · context, reasoning, tool loop, session</div>
+        <div class="layer fragment"><strong>Capabilities</strong> · tools, skills, plugins, MCP, delegation</div>
+        <div class="layer fragment"><strong>Execution Environment</strong> · local, container, remote system</div>
+      </div>
+      <p class="lead">모델을 바꿔도 workflow 구조는 유지된다. 따라서 “어떤 모델인가”와 “어떤 agent system인가”를 분리해서 평가해야 한다.</p>
+      <div class="slide-footer text-small">출처 [1][2]</div>
+    </section>
+
+    <section class="slide" data-title="기본 용어를 경제학 언어로 연결한다">
+      <div class="slide-top text-small"><span>Concept Map</span><span>06</span></div>
+      <h2>기본 용어를 경제학 언어로 연결한다</h2>
+      <div class="term-grid" aria-label="Hermes 개념 선택">
+        <button type="button" class="btn btn-primary" data-term="model">Model</button>
+        <button type="button" class="btn" data-term="tool">Tool</button>
+        <button type="button" class="btn" data-term="memory">Memory</button>
+        <button type="button" class="btn" data-term="skill">Skill</button>
+        <button type="button" class="btn" data-term="profile">Profile</button>
+        <button type="button" class="btn" data-term="subagent">Subagent</button>
+        <button type="button" class="btn" data-term="kanban">Kanban</button>
+        <button type="button" class="btn" data-term="approval">Approval</button>
+        <button type="button" class="btn" data-term="cron">Cron</button>
+      </div>
+      <div id="hermesTermDetail" class="detail-line" aria-live="polite"><strong>Model = cognitive capital.</strong> 판단 능력을 제공하지만, 데이터 접근·행동·조직 기억을 스스로 보장하지는 않는다.</div>
+      <div class="slide-footer text-small">기술 용어를 외우기보다 생산·조직·통제의 역할로 이해한다.</div>
+    </section>
+
+    <section class="slide" data-title="첫 실습은 중앙은행 발표 한 건이면 충분하다">
+      <div class="slide-top text-small"><span>First Lab</span><span>07</span></div>
+      <h2>첫 실습은 중앙은행 발표 한 건이면 충분하다</h2>
+      <div class="timeline" aria-label="중앙은행 발표 분석 실습 과정">
+        <div class="timeline-item"><strong>1</strong><br>공식 발표 찾기</div>
+        <div class="timeline-item fragment"><strong>2</strong><br>원문 저장</div>
+        <div class="timeline-item fragment"><strong>3</strong><br>이전 발표 비교</div>
+        <div class="timeline-item fragment"><strong>4</strong><br>시장 데이터 결합</div>
+        <div class="timeline-item fragment"><strong>5</strong><br>해석 초안</div>
+        <div class="timeline-item fragment"><strong>6</strong><br>근거 검증</div>
+      </div>
+      <div class="big-claim">
+        <h3>완료 조건</h3>
+        <p>발표일 당시 사용 가능한 정보만으로 재실행할 수 있고, 모든 수치와 해석이 원자료에 연결된다.</p>
+      </div>
+    </section>
+
+    <section class="slide" data-title="경제분석은 해석보다 Evidence가 먼저다">
+      <div class="slide-top text-small"><span>Evidence Discipline</span><span>08</span></div>
+      <h2>경제분석은 해석보다 Evidence가 먼저다</h2>
+      <div class="split-visual">
+        <div>
+          <div class="big-claim"><h3>자료의 정체성</h3><p>기관·문서·발표시점·버전·URL</p></div>
+          <div class="big-claim fragment"><h3>내용의 무결성</h3><p>원문·파일 hash·추출 위치</p></div>
+          <div class="big-claim fragment"><h3>판단의 연결</h3><p>어떤 수치와 문장이 어떤 결론을 지지하는가</p></div>
+        </div>
+        <div>
+          <h3>Evidence packet</h3>
+          <pre><code>{
+  "as_of": "2026-08-13",
+  "source": "official",
+  "document_id": "...",
+  "content_hash": "sha256:...",
+  "claim_refs": ["p.3", "table-2"]
+}</code></pre>
+        </div>
+      </div>
+      <div class="slide-footer text-small">Agent가 찾아왔다는 사실은 근거가 아니다. identity와 content가 묶여야 한다.</div>
+    </section>
+
+    <section class="slide" data-title="재현성은 금융 Agent의 최소 계약이다">
+      <div class="slide-top text-small"><span>Reproducibility</span><span>09</span></div>
+      <h2>재현성은 금융 Agent의 최소 계약이다</h2>
+      <div class="flow" aria-label="재현 가능한 분석의 구성요소">
+        <div class="flow-node">As-of</div>
+        <div class="flow-node fragment">Data snapshot</div>
+        <div class="flow-node fragment">Code version</div>
+        <div class="flow-node fragment">Output digest</div>
+        <div class="flow-node fragment">Receipt</div>
+      </div>
+      <div class="two-col">
+        <div><h3>같은 입력</h3><p>동일한 시점과 동일한 데이터가 보존된다.</p></div>
+        <div class="fragment"><h3>같은 계산</h3><p>결과가 일치하거나 차이가 명시적으로 설명된다.</p></div>
+      </div>
+      <div class="slide-footer text-small">“오늘 다시 돌려도 된다”와 “과거 시점 판단을 재구성할 수 있다”는 다르다.</div>
+    </section>
+
+    <section class="slide" data-title="Memory와 Skill은 저장하는 대상이 다르다">
+      <div class="slide-top text-small"><span>Memory vs Skill</span><span>10</span></div>
+      <h2>Memory와 Skill은 저장하는 대상이 다르다</h2>
+      <div class="three-col">
+        <div><h3>Session</h3><p>이번 대화에서 진행된 작업 맥락</p></div>
+        <div class="fragment"><h3>Memory</h3><p>작고 오래 유지할 사실·선호·환경 정보</p></div>
+        <div class="fragment"><h3>Skill</h3><p>필요할 때 불러오는 반복 가능한 업무절차</p></div>
+      </div>
+      <h3>분류 퀴즈</h3>
+      <p>“한국은행 ECOS에서 기준금리 시계열을 가져와 release date를 검증하는 절차”는 어디에 저장할까?</p>
+      <div class="choice-row">
+        <button type="button" class="btn" data-memory-answer="session">Session</button>
+        <button type="button" class="btn" data-memory-answer="memory">Memory</button>
+        <button type="button" class="btn btn-primary" data-memory-answer="skill">Skill</button>
+      </div>
+      <div id="hermesMemoryFeedback" class="quiz-feedback" aria-live="polite">선택하면 이유가 표시됩니다.</div>
+      <div class="slide-footer text-small">출처 [3][4]</div>
+    </section>
+
+    <section class="slide" data-title="좋은 Skill은 조직의 반복 가능한 Routine이다">
+      <div class="slide-top text-small"><span>Procedural Memory</span><span>11</span></div>
+      <h2>좋은 Skill은 조직의 반복 가능한 Routine이다</h2>
+      <div class="two-col">
+        <div>
+          <h3>Skill에 들어갈 것</h3>
+          <ul>
+            <li>업무의 trigger와 완료 조건</li>
+            <li class="fragment">공식 data route와 검증 방법</li>
+            <li class="fragment">실패 유형과 복구 순서</li>
+            <li class="fragment">출력 schema와 예시</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Skill이 아닌 것</h3>
+          <ul>
+            <li>한 번의 대화 전문</li>
+            <li class="fragment">특정 시점의 시장 전망</li>
+            <li class="fragment">API 연결 자체</li>
+            <li class="fragment">검증되지 않은 성공담</li>
+          </ul>
+        </div>
+      </div>
+      <div class="slide-footer text-small">경제학적 대응: Nelson–Winter의 organizational routine · 출처 [3]</div>
+    </section>
+
+    <section class="slide" data-title="Tool, MCP, Plugin은 행동 경로를 만든다">
+      <div class="slide-top text-small"><span>Integration</span><span>12</span></div>
+      <h2>Tool, MCP, Plugin은 행동 경로를 만든다</h2>
+      <div class="three-col">
+        <div class="big-claim"><h3>Tool</h3><p>Agent가 호출할 수 있는 한 가지 행동</p><p class="text-small text-muted">예: 파일 읽기, Python 실행</p></div>
+        <div class="big-claim fragment"><h3>MCP</h3><p>외부 system의 tools를 표준 방식으로 노출</p><p class="text-small text-muted">예: DB·문서·업무 시스템</p></div>
+        <div class="big-claim fragment"><h3>Plugin</h3><p>tools·hooks·commands·skills를 하나의 확장으로 묶음</p><p class="text-small text-muted">예: 금융데이터 provider package</p></div>
+      </div>
+      <p class="lead">Skill은 “어떻게 일할 것인가”이고, MCP/Plugin은 “어디에 접근하고 무엇을 실행할 수 있는가”이다.</p>
+      <div class="slide-footer text-small">출처 [2][8]</div>
+    </section>
+
+    <section class="slide" data-title="Multi-Agent보다 Single Agent를 먼저 완성한다">
+      <div class="slide-top text-small"><span>Learning Sequence</span><span>13</span></div>
+      <h2>Multi-Agent보다 Single Agent를 먼저 완성한다</h2>
+      <div class="big-claim">
+        <h3>권장 순서</h3>
+        <p>Single Agent → Tools → Evidence → Memory/Skills → Automation → Subagents → Governance</p>
+      </div>
+      <div class="two-col">
+        <div class="fragment"><h3>먼저 증명할 것</h3><p>한 agent가 한 경제분석을 정확하게 끝낼 수 있는가?</p></div>
+        <div class="fragment"><h3>그다음 나눌 것</h3><p>어떤 단계가 독립적인 전문성과 검증을 요구하는가?</p></div>
+      </div>
+      <div class="slide-footer text-small">조직도를 먼저 만들면 오류의 소유권과 handoff가 더 불분명해진다.</div>
+    </section>
+
+    <section class="slide" data-title="Delegation은 비교우위와 Principal–Agent 문제를 함께 만든다">
+      <div class="slide-top text-small"><span>Delegation</span><span>14</span></div>
+      <h2>Delegation은 비교우위와 Principal–Agent 문제를 함께 만든다</h2>
+      <div class="split-visual">
+        <div>
+          <h3>이익</h3>
+          <div class="compare-block">전문성에 따른 division of labor</div>
+          <div class="compare-block fragment">독립 context를 통한 병렬 작업</div>
+          <div class="compare-block fragment">parent context 비용 절감</div>
+        </div>
+        <div>
+          <h3>비용</h3>
+          <div class="compare-block">목표의 불완전한 전달</div>
+          <div class="compare-block fragment">결과 요약에서 evidence 손실</div>
+          <div class="compare-block fragment">누가 검증 책임을 갖는가</div>
+        </div>
+      </div>
+      <div class="big-claim"><p>따라서 delegation에는 task scope, input freeze, output schema, validator가 함께 필요하다.</p></div>
+      <div class="slide-footer text-small">Hermes subagent는 격리된 context와 terminal에서 일하고 최종 요약을 parent에 반환한다 · 출처 [6]</div>
+    </section>
+
+    <section class="slide" data-title="Subagent, Profile, Kanban은 시간축이 다르다">
+      <div class="slide-top text-small"><span>Orchestration</span><span>15</span></div>
+      <h2>Subagent, Profile, Kanban은 시간축이 다르다</h2>
+      <div class="table-responsive">
+        <table class="table">
+          <thead><tr><th>개념</th><th>수명</th><th>상태</th><th>적합한 경제·금융 업무</th></tr></thead>
+          <tbody>
+            <tr><td>Subagent</td><td>한 위임 작업</td><td>격리 context</td><td>기업 10개를 병렬 조사</td></tr>
+            <tr class="fragment"><td>Profile</td><td>지속적</td><td>config·memory·skills 분리</td><td>거시·주식·신용 specialist</td></tr>
+            <tr class="fragment"><td>Kanban</td><td>장기 workflow</td><td>task·handoff·실패 이력</td><td>Analyst→Reviewer→Decision</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="slide-footer text-small">출처 [5][6][7]</div>
+    </section>
+
+    <section class="slide" data-title="Cron은 반복 판단을 생산 공정으로 바꾼다">
+      <div class="slide-top text-small"><span>Automation</span><span>16</span></div>
+      <h2>Cron은 반복 판단을 생산 공정으로 바꾼다</h2>
+      <div class="flow" aria-label="정기 경제 모니터링 workflow">
+        <div class="flow-node">정해진 시각</div>
+        <div class="flow-node fragment">Fresh session</div>
+        <div class="flow-node fragment">새 데이터 확인</div>
+        <div class="flow-node fragment">변화만 분석</div>
+        <div class="flow-node fragment">보고·기록</div>
+      </div>
+      <div class="two-col">
+        <div><h3>LLM이 필요한 경우</h3><p>해석·비교·예외 판단이 필요한 브리핑</p></div>
+        <div class="fragment"><h3>Script가 더 나은 경우</h3><p>정해진 계산·health check·단순 알림</p></div>
+      </div>
+      <div class="slide-footer text-small">Cron 작업은 현재 chat이 아닌 fresh session에서 실행되므로 prompt가 self-contained해야 한다 · 출처 [9]</div>
+    </section>
+
+    <section class="slide" data-title="재무경제에서는 시점 오류가 가장 위험하다">
+      <div class="slide-top text-small"><span>Financial Research Failures</span><span>17</span></div>
+      <h2>재무경제에서는 시점 오류가 가장 위험하다</h2>
+      <div class="risk-list">
+        <button type="button" class="btn btn-ghost risk-row" data-risk="lookahead"><strong>Look-ahead bias</strong><span>미래에 공개된 정보를 과거 결정에 사용</span></button>
+        <button type="button" class="btn btn-ghost risk-row" data-risk="survivorship"><strong>Survivorship bias</strong><span>현재 생존한 기업만 과거 universe에 포함</span></button>
+        <button type="button" class="btn btn-ghost risk-row" data-risk="revision"><strong>Data revision</strong><span>현재 수정값을 최초 발표값처럼 사용</span></button>
+        <button type="button" class="btn btn-ghost risk-row" data-risk="leakage"><strong>Data leakage</strong><span>label 또는 결과 정보가 feature에 유입</span></button>
+        <button type="button" class="btn btn-ghost risk-row" data-risk="causality"><strong>Causal overclaim</strong><span>상관관계를 정책효과로 단정</span></button>
+      </div>
+      <div id="hermesRiskDetail" class="detail-line" aria-live="polite">오류 유형을 선택하면 Agent가 지켜야 할 검증 계약이 표시됩니다.</div>
+    </section>
+
+    <section class="slide" data-title="금융 Agent의 권한은 결과의 중대성에 맞춘다">
+      <div class="slide-top text-small"><span>Governance</span><span>18</span></div>
+      <h2>금융 Agent의 권한은 결과의 중대성에 맞춘다</h2>
+      <div class="three-col">
+        <div><h3>자동 실행</h3><p>자료 조회, 계산, schema 검증, staging 저장</p></div>
+        <div class="fragment"><h3>조건부 승인</h3><p>외부 발송, canonical 반영, scheduler 변경</p></div>
+        <div class="fragment"><h3>인간 결정</h3><p>주문, 자금 이동, 법적 확약, 중요 정책 변경</p></div>
+      </div>
+      <div class="big-claim">
+        <p>Code determines facts. Validators enforce contracts. AI diagnoses ambiguity. Humans decide consequential exceptions.</p>
+      </div>
+      <div class="slide-footer text-small">Hermes는 command approval, file-write boundary, sandbox, credential filtering을 제공한다 · 출처 [10]</div>
+    </section>
+
+    <section class="slide" data-title="평가는 답변 점수가 아니라 시스템 품질을 본다">
+      <div class="slide-top text-small"><span>Evaluation</span><span>19</span></div>
+      <h2>평가는 답변 점수가 아니라 시스템 품질을 본다</h2>
+      <div class="rubric-bar"><span>경제적 질문</span><div class="rubric-track"><div class="rubric-fill" style="width:20%"></div></div><strong>20</strong></div>
+      <div class="rubric-bar fragment"><span>Evidence·시점</span><div class="rubric-track"><div class="rubric-fill" style="width:25%"></div></div><strong>25</strong></div>
+      <div class="rubric-bar fragment"><span>재현성·검증</span><div class="rubric-track"><div class="rubric-fill" style="width:25%"></div></div><strong>25</strong></div>
+      <div class="rubric-bar fragment"><span>Agent 설계</span><div class="rubric-track"><div class="rubric-fill" style="width:15%"></div></div><strong>15</strong></div>
+      <div class="rubric-bar fragment"><span>비용·위험 통제</span><div class="rubric-track"><div class="rubric-fill" style="width:15%"></div></div><strong>15</strong></div>
+      <p class="lead">정답률만 높아도 근거가 끊기거나 과거 시점이 재현되지 않으면 금융 연구 agent로는 실패다.</p>
+    </section>
+
+    <section class="slide" data-title="세 가지 Capstone 중 하나를 선택한다">
+      <div class="slide-top text-small"><span>Capstone</span><span>20</span></div>
+      <h2>세 가지 Capstone 중 하나를 선택한다</h2>
+      <div class="choice-row">
+        <button type="button" class="btn btn-primary" data-capstone="monetary">Monetary Policy</button>
+        <button type="button" class="btn" data-capstone="equity">Equity Research</button>
+        <button type="button" class="btn" data-capstone="risk">Portfolio Risk</button>
+      </div>
+      <div id="hermesCapstoneDetail" class="detail-line" aria-live="polite"><strong>Monetary Policy Event Agent</strong><br>중앙은행 발표 수집 → 이전 발표 비교 → surprise 측정 → 금리·환율 반응 → evidence-bound report.</div>
+      <div class="two-col">
+        <div class="fragment"><h3>중간 산출물</h3><p>Source registry, Python notebook, skill, validation receipt</p></div>
+        <div class="fragment"><h3>최종 시연</h3><p>성공 사례 한 건과 실패·복구 사례 한 건을 함께 재생</p></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="12강은 한 Agent에서 조직적 시스템으로 확장된다">
+      <div class="slide-top text-small"><span>Course Sequence</span><span>21</span></div>
+      <h2>12강은 한 Agent에서 조직적 시스템으로 확장된다</h2>
+      <div class="two-col">
+        <div>
+          <h3>1–3강 · Foundation</h3>
+          <p>Agent 개념, Hermes 구조, 실행 환경</p>
+          <h3>4–6강 · Research System</h3>
+          <p>Tools, evidence, reproducibility, memory·skills</p>
+        </div>
+        <div>
+          <h3>7–9강 · Organization</h3>
+          <p>MCP·Plugin, delegation, profiles·Kanban</p>
+          <h3>10–12강 · Operation</h3>
+          <p>Cron, 금융 오류, governance·evaluation</p>
+        </div>
+      </div>
+      <div class="big-claim fragment"><p>첫 6강은 single agent의 정확성, 뒤 6강은 조직적 확장과 통제를 다룬다.</p></div>
+    </section>
+
+    <section class="slide" data-title="첫 과제는 작지만 완결된 Agent를 만드는 것이다">
+      <div class="slide-top text-small"><span>Closing Assignment</span><span>22</span></div>
+      <h2>첫 과제는 작지만 완결된 Agent를 만드는 것이다</h2>
+      <div class="big-claim">
+        <h3>과제</h3>
+        <p>공식 경제지표 하나를 선택하여 수집 → 시점 확인 → Python 계산 → 5문장 해석 → 근거 검증까지 수행하라.</p>
+      </div>
+      <div class="two-col">
+        <div class="fragment"><h3>제출물</h3><p>원자료, 코드, 결과, source references, 실행 receipt</p></div>
+        <div class="fragment"><h3>금지</h3><p>출처 없는 수치, 미래정보 사용, 검증되지 않은 자동 주문</p></div>
+      </div>
+      <div class="accent-line" aria-hidden="true"></div>
+      <p class="lead">Agent를 많이 만드는 것이 목표가 아니다. 경제적 질문 하나를 끝까지 검증 가능하게 완성하는 것이 목표다.</p>
+    </section>
+
+    <section class="slide" data-title="공식 참고자료">
+      <div class="slide-top text-small"><span>Sources</span><span>+</span></div>
+      <h2>공식 참고자료</h2>
+      <ol class="source-list text-small">
+        <li>[1] <a href="https://github.com/NousResearch/hermes-agent">NousResearch / hermes-agent</a></li>
+        <li>[2] <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/tools">Tools &amp; Toolsets</a></li>
+        <li>[3] <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/skills">Skills System</a></li>
+        <li>[4] <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/memory">Persistent Memory</a></li>
+        <li>[5] <a href="https://hermes-agent.nousresearch.com/docs/user-guide/profiles">Profiles</a></li>
+        <li>[6] <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/delegation">Subagent Delegation</a></li>
+        <li>[7] <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/kanban">Kanban</a></li>
+        <li>[8] <a href="https://hermes-agent.nousresearch.com/docs/developer-guide/architecture">Architecture &amp; Plugins</a></li>
+        <li>[9] <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/cron">Scheduled Tasks</a></li>
+        <li>[10] <a href="https://hermes-agent.nousresearch.com/docs/user-guide/security">Security</a></li>
+      </ol>
+      <p class="lead">명령어와 feature는 바뀔 수 있다. 강의에서는 concepts, contracts, evidence, governance를 중심에 둔다.</p>
+    </section>
+  </main>
+
+  <dialog id="hermesOverview" class="card" aria-labelledby="hermesOverviewTitle">
+    <h2 id="hermesOverviewTitle">전체 목차</h2>
+    <div id="hermesOverviewGrid" class="overview-grid"></div>
+    <div class="viz-row">
+      <button type="button" class="btn btn-primary" id="hermesOverviewClose">닫기</button>
+    </div>
+  </dialog>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.getElementById("hermes-econ-deck");
+  if (!root) return;
+
+  var slides = Array.prototype.slice.call(root.querySelectorAll(".slide"));
+  var index = 0;
+  var counter = document.getElementById("hermesCounter");
+  var progress = document.getElementById("hermesProgress");
+  var prevBtn = document.getElementById("hermesPrevBtn");
+  var nextBtn = document.getElementById("hermesNextBtn");
+  var revealBtn = document.getElementById("hermesRevealBtn");
+  var overview = document.getElementById("hermesOverview");
+  var overviewGrid = document.getElementById("hermesOverviewGrid");
+
+  progress.max = slides.length;
+
+  function fragmentsForCurrent() {
+    return Array.prototype.slice.call(slides[index].querySelectorAll(".fragment"));
+  }
+
+  function update() {
+    slides.forEach(function (slide, i) {
+      slide.classList.toggle("is-active", i === index);
+      slide.setAttribute("aria-hidden", i === index ? "false" : "true");
+    });
+    counter.textContent = String(index + 1) + " / " + String(slides.length);
+    progress.value = index + 1;
+    prevBtn.disabled = index === 0;
+    nextBtn.disabled = index === slides.length - 1;
+    revealBtn.disabled = fragmentsForCurrent().length === 0;
+    document.title = slides[index].getAttribute("data-title") + " · Hermes Agent";
+  }
+
+  function goTo(nextIndex) {
+    if (nextIndex < 0 || nextIndex >= slides.length) return;
+    index = nextIndex;
+    update();
+  }
+
+  function revealNext() {
+    var fragments = fragmentsForCurrent();
+    var target = fragments.find(function (item) { return !item.classList.contains("is-revealed"); });
+    if (target) {
+      target.classList.add("is-revealed");
+      return true;
+    }
+    return false;
+  }
+
+  prevBtn.addEventListener("click", function () { goTo(index - 1); });
+  nextBtn.addEventListener("click", function () { goTo(index + 1); });
+  revealBtn.addEventListener("click", revealNext);
+
+  slides.forEach(function (slide, i) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn btn-ghost";
+    button.textContent = String(i + 1) + ". " + slide.getAttribute("data-title");
+    button.addEventListener("click", function () {
+      goTo(i);
+      overview.close();
+    });
+    overviewGrid.appendChild(button);
+  });
+
+  document.getElementById("hermesOverviewBtn").addEventListener("click", function () { overview.showModal(); });
+  document.getElementById("hermesOverviewClose").addEventListener("click", function () { overview.close(); });
+
+  document.addEventListener("keydown", function (event) {
+    if (!root.matches(":hover") && !root.contains(document.activeElement)) return;
+    if (event.target && /INPUT|SELECT|TEXTAREA/.test(event.target.tagName)) return;
+    if (event.key === "ArrowRight") { event.preventDefault(); goTo(index + 1); }
+    if (event.key === "ArrowLeft") { event.preventDefault(); goTo(index - 1); }
+    if (event.key === " " || event.key === "Enter") {
+      if (event.target && event.target.tagName === "BUTTON") return;
+      event.preventDefault();
+      if (!revealNext()) goTo(index + 1);
+    }
+    if (event.key === "Home") { event.preventDefault(); goTo(0); }
+    if (event.key === "End") { event.preventDefault(); goTo(slides.length - 1); }
+    if (event.key.toLowerCase() === "o") { event.preventDefault(); overview.showModal(); }
+  });
+
+  var loopDetails = [
+    "<strong>목표:</strong> ‘한국은행의 최근 금리결정을 분석하라’를 검증 가능한 완료 조건으로 바꾼다.",
+    "<strong>추론:</strong> 필요한 공식 발표, 이전 결정, 금리·환율 자료와 비교 방법을 계획한다.",
+    "<strong>도구 실행:</strong> Web·API·Python·파일 도구를 호출해 자료를 획득하고 계산한다.",
+    "<strong>결과 관찰:</strong> 누락, 날짜 불일치, parsing 오류, 계산 결과를 다시 context로 받는다.",
+    "<strong>검증·수정:</strong> 출처와 수치를 검사하고 실패한 단계만 고친 뒤 완료 조건을 판정한다."
+  ];
+  Array.prototype.slice.call(root.querySelectorAll("[data-loop-step]")).forEach(function (button) {
+    button.addEventListener("click", function () {
+      var step = Number(button.getAttribute("data-loop-step"));
+      document.getElementById("hermesLoopDetail").innerHTML = loopDetails[step];
+      Array.prototype.slice.call(root.querySelectorAll("[data-loop-node]")).forEach(function (node) {
+        node.classList.toggle("is-current", Number(node.getAttribute("data-loop-node")) === step);
+      });
+      Array.prototype.slice.call(root.querySelectorAll("[data-loop-step]")).forEach(function (peer) {
+        peer.classList.toggle("btn-primary", peer === button);
+      });
+    });
+  });
+
+  var termDetails = {
+    model: "<strong>Model = cognitive capital.</strong> 판단 능력을 제공하지만 데이터 접근·행동·조직 기억을 스스로 보장하지는 않는다.",
+    tool: "<strong>Tool = means of production.</strong> 검색·코드·파일·브라우저처럼 실제 환경에 영향을 주는 행동 수단이다.",
+    memory: "<strong>Memory = firm-specific knowledge.</strong> 세션을 넘어 유지해야 할 작고 지속적인 사실과 선호다.",
+    skill: "<strong>Skill = organizational routine.</strong> 반복 업무에서 다시 불러오는 검증된 절차와 기준이다.",
+    profile: "<strong>Profile = organizational boundary.</strong> config·keys·memory·sessions·skills가 분리된 지속적 agent 단위다.",
+    subagent: "<strong>Subagent = delegated worker.</strong> 제한된 목표를 독립 context에서 수행하는 일시적 분업 단위다.",
+    kanban: "<strong>Kanban = coordination institution.</strong> 장기 task·handoff·실패 이력을 여러 agent 사이에서 보존한다.",
+    approval: "<strong>Approval = control rights.</strong> 중대한 행동을 누가 최종 결정할지 명시한다.",
+    cron: "<strong>Cron = repeated production.</strong> 정해진 시각에 동일 계약을 fresh session으로 반복 실행한다."
+  };
+  Array.prototype.slice.call(root.querySelectorAll("[data-term]")).forEach(function (button) {
+    button.addEventListener("click", function () {
+      document.getElementById("hermesTermDetail").innerHTML = termDetails[button.getAttribute("data-term")];
+      Array.prototype.slice.call(root.querySelectorAll("[data-term]")).forEach(function (peer) {
+        peer.classList.toggle("btn-primary", peer === button);
+      });
+    });
+  });
+
+  Array.prototype.slice.call(root.querySelectorAll("[data-memory-answer]")).forEach(function (button) {
+    button.addEventListener("click", function () {
+      var answer = button.getAttribute("data-memory-answer");
+      var feedback = document.getElementById("hermesMemoryFeedback");
+      if (answer === "skill") {
+        feedback.innerHTML = "<strong>정답: Skill.</strong> 여러 세션에서 반복되는 data route와 검증 절차이므로 procedural memory로 저장한다.";
+      } else if (answer === "memory") {
+        feedback.innerHTML = "<strong>Memory는 너무 짧다.</strong> ‘기준 통화는 KRW’ 같은 작은 지속 사실에는 적합하지만 전체 workflow에는 부족하다.";
+      } else {
+        feedback.innerHTML = "<strong>Session만으로는 재사용되지 않는다.</strong> 이번 작업 맥락은 남지만 다음 관련 업무에서 자동으로 절차가 로드되지 않는다.";
+      }
+    });
+  });
+
+  var riskDetails = {
+    lookahead: "<strong>검증 계약:</strong> 모든 입력에 available_at을 두고 decision time 이후 공개된 자료를 차단한다.",
+    survivorship: "<strong>검증 계약:</strong> 현재 목록이 아니라 분석 시점의 universe와 delisting 이력을 사용한다.",
+    revision: "<strong>검증 계약:</strong> first-release 값과 revised 값을 구분하고 vintage를 기록한다.",
+    leakage: "<strong>검증 계약:</strong> feature cutoff 이후 정보와 label-derived field가 입력에 포함되지 않았는지 검사한다.",
+    causality: "<strong>검증 계약:</strong> 식별전략이 없으면 ‘연관’, ‘동행’, ‘가능성’ 수준으로 claim을 제한한다."
+  };
+  Array.prototype.slice.call(root.querySelectorAll("[data-risk]")).forEach(function (button) {
+    button.addEventListener("click", function () {
+      document.getElementById("hermesRiskDetail").innerHTML = riskDetails[button.getAttribute("data-risk")];
+    });
+  });
+
+  var capstones = {
+    monetary: "<strong>Monetary Policy Event Agent</strong><br>중앙은행 발표 수집 → 이전 발표 비교 → surprise 측정 → 금리·환율 반응 → evidence-bound report.",
+    equity: "<strong>Equity Research Agent</strong><br>DART·EDGAR 공시 → 재무비율 → 전망과 실제 실적 비교 → analyst memo → independent review.",
+    risk: "<strong>Portfolio Risk Agent</strong><br>모의 포트폴리오 → 가격·환율 갱신 → risk metrics → 한도 위반 → human approval memo."
+  };
+  Array.prototype.slice.call(root.querySelectorAll("[data-capstone]")).forEach(function (button) {
+    button.addEventListener("click", function () {
+      document.getElementById("hermesCapstoneDetail").innerHTML = capstones[button.getAttribute("data-capstone")];
+      Array.prototype.slice.call(root.querySelectorAll("[data-capstone]")).forEach(function (peer) {
+        peer.classList.toggle("btn-primary", peer === button);
+      });
+    });
+  });
+
+  update();
+})();
+</script>
+
+<script id="codex-visualization-floating-ui-core" src="https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js"></script>
+<script id="codex-visualization-floating-ui-dom" src="https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js"></script>
+<script id="codex-visualization-lucide" async src="https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js"></script>
+<script id="codex-visualization-tooltip">/* oxlint-disable typescript/no-unsafe-argument, typescript/no-unsafe-call, typescript/no-unsafe-return */
+// Runs inside the visualization sandbox, not the host webview.
+(() => {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set(["top", "right", "bottom", "left"]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+
+  const getTrigger = (target) =>
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target.closest("[data-tooltip]")
+      : null;
+  const containsTarget = (trigger, target) =>
+    target?.nodeType != null && trigger.contains(target);
+  const getContent = (trigger) =>
+    trigger.getAttribute("data-tooltip")?.trim() ?? "";
+  const getPlacement = (trigger) => {
+    const placement = trigger.getAttribute("data-tooltip-placement");
+    return tooltipPlacements.has(placement) ? placement : "top";
+  };
+  const getTooltip = () => {
+    if (tooltip == null) {
+      tooltip = document.createElement("div");
+      tooltip.id = tooltipId;
+      tooltip.className = "tooltip";
+      tooltip.setAttribute("role", "tooltip");
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) => {
+    const ids = new Set(
+      (trigger.getAttribute("aria-describedby") ?? "")
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute("aria-describedby");
+    } else {
+      trigger.setAttribute("aria-describedby", [...ids].join(" "));
+    }
+  };
+  const clearOpenTimeout = () => {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) => {
+    clearOpenTimeout();
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) => {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              "--tooltip-available-width",
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              "--tooltip-available-height",
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: "fixed",
+    })
+      .then(({ x, y }) => {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = "visible";
+      })
+      .catch(() => {
+        if (activeTrigger === trigger && request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) => {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = "hidden";
+    floating.style.transform = "translate(0, 0)";
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () => {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) => {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() < skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() => {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) => {
+    if (event.pointerType === "touch") {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handleLeave = (event) => {
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) => {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(":focus-visible")) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) => {
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () => {
+    closeTooltip(false);
+    document.removeEventListener("pointerover", handlePointerOpen);
+    document.removeEventListener("pointerout", handleLeave);
+    document.removeEventListener("focusin", handleFocusIn);
+    document.removeEventListener("focusout", handleLeave);
+    document.removeEventListener("keydown", handleKeyDown);
+    document.removeEventListener("contextmenu", handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener("pointerover", handlePointerOpen);
+  document.addEventListener("pointerout", handleLeave);
+  document.addEventListener("focusin", handleFocusIn);
+  document.addEventListener("focusout", handleLeave);
+  document.addEventListener("keydown", handleKeyDown);
+  document.addEventListener("contextmenu", handleContextMenu);
+  window.addEventListener("pagehide", destroy, { once: true });
+})();
+</script>
+<script id="codex-visualization-lucide-initialization">(() => {
+  const initialize = () => {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById("codex-visualization-lucide")
+    ?.addEventListener("load", initialize, { once: true });
+})();
+</script>
+</body>
+</html>
