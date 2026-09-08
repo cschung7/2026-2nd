@@ -1,2 +1,4 @@
 .DS_Store
 @eaDir/
+__pycache__/
+*.py[cod]
