@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ondo · BUIDL · Mastercard | Value Superhighway</title>
+  <style>
+    :root{
+      --bg:#070b16; --fg:#f5f7fb; --muted:#aab3c5; --line:rgba(255,255,255,.16);
+      --accent:#76e4f7; --accent2:#b794ff; --accent3:#8cffc1; --danger:#ffb86b;
+      --card:rgba(255,255,255,.08); --card2:rgba(255,255,255,.12);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif;overflow:hidden}
+    body:before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 18% 12%,rgba(118,228,247,.22),transparent 28%),radial-gradient(circle at 88% 82%,rgba(183,148,255,.2),transparent 30%),linear-gradient(135deg,#070b16,#0c1730 55%,#080a13);z-index:-2}
+    body:after{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.5),transparent 70%);z-index:-1}
+    .deck{height:100vh;width:100vw;position:relative}
+    .slide{position:absolute;inset:0;display:none;padding:72px 88px 92px;opacity:0;transform:translateX(28px);transition:opacity .28s ease,transform .28s ease}
+    .slide.active{display:flex;flex-direction:column;opacity:1;transform:translateX(0)}
+    .eyebrow{color:var(--accent);font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:16px;margin-bottom:18px}
+    h1{font-size:66px;line-height:1.03;margin:0 0 24px;font-weight:900;letter-spacing:-.05em}
+    h2{font-size:48px;line-height:1.08;margin:0 0 24px;font-weight:850;letter-spacing:-.04em}
+    h3{font-size:31px;margin:20px 0 12px;letter-spacing:-.025em}
+    p,li{font-size:25px;line-height:1.52;color:#e7ecf6}
+    .muted{color:var(--muted)}
+    .big{font-size:34px;line-height:1.35}.small{font-size:18px}.center{align-items:center;justify-content:center;text-align:center}.split{display:grid;grid-template-columns:1fr 1fr;gap:42px;align-items:center}.three{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:28px;padding:26px 28px;box-shadow:0 20px 60px rgba(0,0,0,.22)}
+    .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:10px 16px;background:rgba(255,255,255,.08);color:#eaf7ff;font-weight:700;margin:6px 6px 0 0}
+    .quote{font-size:38px;line-height:1.38;font-weight:850;letter-spacing:-.04em;border-left:7px solid var(--accent);padding-left:28px;margin:20px 0;color:#fff}
+    .flow{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;margin:28px 0}.node{min-width:160px;text-align:center;border:1px solid var(--line);background:rgba(255,255,255,.09);border-radius:24px;padding:20px 18px;font-size:23px;font-weight:800}.arrow{font-size:36px;color:var(--accent);font-weight:900}.mega{font-size:84px;line-height:.95;font-weight:950;letter-spacing:-.07em}.accent{color:var(--accent)}.accent2{color:var(--accent2)}.accent3{color:var(--accent3)}.danger{color:var(--danger)}
+    table{width:100%;border-collapse:collapse;margin-top:12px;font-size:22px;overflow:hidden;border-radius:18px}th,td{border-bottom:1px solid var(--line);padding:16px 18px;text-align:left}th{color:var(--accent);font-size:19px;text-transform:uppercase;letter-spacing:.04em}td{color:#eef3fb}.table-card{overflow:hidden;padding:8px 14px 14px}
+    ul{margin:0;padding-left:30px}.caption{position:absolute;left:88px;bottom:38px;color:#8f9aaf;font-size:15px}.slideNo{position:absolute;right:88px;bottom:36px;color:#8f9aaf;font-size:15px}.controls{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:flex;gap:10px;z-index:20}.btn{border:1px solid var(--line);background:rgba(10,16,32,.78);color:#fff;border-radius:999px;padding:10px 16px;font-size:15px;cursor:pointer;backdrop-filter:blur(10px)}.btn:hover{background:rgba(255,255,255,.14)}.progress{position:fixed;left:0;top:0;height:5px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;z-index:30}.toc{position:fixed;right:22px;top:22px;z-index:40}.drawer{position:fixed;right:22px;top:72px;width:360px;max-height:72vh;overflow:auto;background:rgba(8,12,24,.94);border:1px solid var(--line);border-radius:24px;padding:14px;display:none;backdrop-filter:blur(14px);box-shadow:0 24px 80px rgba(0,0,0,.45)}.drawer.open{display:block}.tocItem{padding:12px 14px;border-radius:14px;color:#dce7fa;cursor:pointer;font-size:15px}.tocItem:hover,.tocItem.current{background:rgba(118,228,247,.14);color:#fff}.kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;border:1px solid var(--line);border-bottom-width:3px;border-radius:8px;padding:3px 7px;color:#e9f6ff;background:rgba(255,255,255,.08)}
+    .stack{display:flex;flex-direction:column;gap:18px}.logo{width:130px;height:130px;border-radius:36px;margin:0 auto 24px;background:conic-gradient(from 200deg,var(--accent),var(--accent2),var(--accent3),var(--accent));box-shadow:0 0 80px rgba(118,228,247,.35);position:relative}.logo:after{content:"₿→$";position:absolute;inset:12px;background:#071026;border-radius:28px;display:grid;place-items:center;font-weight:950;font-size:34px;color:#fff}.tagline{font-size:28px;color:#c7d1e7}.mini{font-size:19px;color:var(--muted);line-height:1.5}.diagram{position:relative;min-height:430px}.ring{position:absolute;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;text-align:center;font-weight:850;background:rgba(255,255,255,.055)}.r1{width:320px;height:320px;left:50%;top:50%;transform:translate(-50%,-50%);color:var(--accent)}.r2{width:460px;height:460px;left:50%;top:50%;transform:translate(-50%,-50%);color:var(--accent2)}.r3{width:600px;height:600px;left:50%;top:50%;transform:translate(-50%,-50%);color:var(--accent3);opacity:.75}.timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:30px}.step{border-top:5px solid var(--accent);padding-top:18px}.step:nth-child(2){border-color:var(--accent2)}.step:nth-child(3){border-color:var(--accent3)}
+    @media(max-width:900px){.slide{padding:54px 28px 88px}.split,.three,.grid2,.timeline{grid-template-columns:1fr}.mega{font-size:54px}h1{font-size:44px}h2{font-size:36px}p,li{font-size:20px}.node{min-width:120px;font-size:18px}.drawer{left:18px;right:18px;width:auto}.caption{left:28px}.slideNo{right:28px}.controls{bottom:16px}}
+  </style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<button class="btn toc" id="tocBtn">목차</button>
+<div class="drawer" id="drawer"></div>
+<div class="deck" id="deck">
+
+<section class="slide active center" data-title="Title">
+  <div class="logo"></div>
+  <div class="eyebrow">AI Finance Lecture</div>
+  <h1>Ondo · BUIDL · Mastercard</h1>
+  <p class="tagline">Value Superhighway 시대의 금융 인프라</p>
+  <p class="mini">Tokenized Treasury · Stablecoin · Real-time Settlement · AI Finance</p>
+</section>
+
+<section class="slide" data-title="핵심 질문">
+  <div class="eyebrow">Opening Question</div>
+  <h2>왜 미국 국채가 블록체인 위로 올라오는가?</h2>
+  <div class="grid2">
+    <div class="card"><h3>학생이 느끼는 문제</h3><ul><li>해외송금은 왜 느린가?</li><li>주식 정산은 왜 즉시 안 되는가?</li><li>은행 영업시간은 왜 중요한가?</li></ul></div>
+    <div class="card"><h3>강의의 핵심</h3><p class="big">이건 “코인 가격”보다 <span class="accent">금융 인프라 재구성</span>의 문제다.</p></div>
+  </div>
+</section>
+
+<section class="slide center" data-title="시대 변화">
+  <div class="eyebrow">Big Frame</div>
+  <div class="mega">Information → Value → Intelligence</div>
+  <div class="timeline">
+    <div class="card step"><h3>Internet</h3><p>Information Superhighway<br><span class="muted">정보 이동</span></p></div>
+    <div class="card step"><h3>Blockchain</h3><p>Value Superhighway<br><span class="muted">가치·담보·자산 이동</span></p></div>
+    <div class="card step"><h3>AI</h3><p>Intelligence Superhighway<br><span class="muted">추론·의사결정 이동</span></p></div>
+  </div>
+</section>
+
+<section class="slide" data-title="금융은 아직 느리다">
+  <div class="eyebrow">Problem</div>
+  <h2>정보는 인터넷 속도, 돈은 아직 느리다</h2>
+  <div class="split">
+    <div class="card"><h3>인터넷 이후</h3><p>문서, 사진, 영상, 메시지는 거의 즉시 이동한다.</p><p class="quote">정보 이동 비용 ↓</p></div>
+    <div class="card"><h3>금융 시스템</h3><ul><li>국제송금 지연</li><li>T+1/T+2 정산</li><li>중개은행</li><li>분리된 ledger</li><li>영업시간 제약</li></ul></div>
+  </div>
+</section>
+
+<section class="slide" data-title="Blockchain 본질">
+  <div class="eyebrow">Ledger Revolution</div>
+  <h2>Blockchain의 본질은 “코인”보다 Ledger 혁신</h2>
+  <div class="flow">
+    <div class="node">중앙 Ledger</div><div class="arrow">→</div><div class="node">공유 Ledger</div><div class="arrow">→</div><div class="node">프로그래머블 정산</div>
+  </div>
+  <p class="quote">누가 소유하고, 언제 이동했고, 최종 정산됐는가를 네트워크가 기록한다.</p>
+</section>
+
+<section class="slide" data-title="Stablecoin">
+  <div class="eyebrow">Digital Dollar</div>
+  <h2>Stablecoin은 디지털 달러 결제 레이어</h2>
+  <div class="table-card card">
+    <table><tr><th>자산</th><th>학생에게 설명할 역할</th></tr><tr><td>Bitcoin</td><td>디지털 금 / 희소성 실험</td></tr><tr><td>USDC · USDT</td><td>인터넷 위의 달러</td></tr><tr><td>Stablecoin</td><td>24/7 글로벌 결제 수단</td></tr></table>
+  </div>
+</section>
+
+<section class="slide" data-title="Tokenization">
+  <div class="eyebrow">Tokenization</div>
+  <h2>토큰화는 새 자산을 만드는 것이 아니다</h2>
+  <p class="quote">기존 자산의 ownership ledger를 바꾸는 것이다.</p>
+  <div class="flow"><div class="node">미국 국채</div><div class="arrow">→</div><div class="node">펀드/수탁</div><div class="arrow">→</div><div class="node">블록체인 토큰</div></div>
+  <p class="muted big">핵심은 “자산”보다 “소유권 기록과 정산 방식”의 변화다.</p>
+</section>
+
+<section class="slide" data-title="왜 국채인가">
+  <div class="eyebrow">Collateral Economy</div>
+  <h2>왜 하필 미국 국채인가?</h2>
+  <div class="three">
+    <div class="card"><h3>Reserve Asset</h3><p>글로벌 금융의 기준 자산</p></div>
+    <div class="card"><h3>Collateral</h3><p>Repo, 레버리지, 기관 거래의 담보</p></div>
+    <div class="card"><h3>Yield</h3><p>현금보다 수익을 제공하는 준비금</p></div>
+  </div>
+  <p class="quote">금융은 결국 담보 위에서 움직인다.</p>
+</section>
+
+<section class="slide" data-title="BUIDL">
+  <div class="eyebrow">BlackRock BUIDL</div>
+  <h2>BUIDL: 기관용 Tokenized Treasury Fund</h2>
+  <div class="split">
+    <div class="card stack"><span class="pill">BlackRock</span><span class="pill">Tokenized Treasury</span><span class="pill">Institutional Reserve</span><span class="pill">On-chain Fund</span></div>
+    <div><p class="big">세계 최대 자산운용사가 미국 국채 기반 펀드를 블록체인 위에서 운용하기 시작했다는 점이 상징적이다.</p><p class="muted">학생에게는 “ETF 회사가 금융 인프라 회사로 확장하는 장면”으로 설명하면 좋다.</p></div>
+  </div>
+</section>
+
+<section class="slide" data-title="Ondo 역할">
+  <div class="eyebrow">Ondo Finance</div>
+  <h2>Ondo는 미국 국채를 Programmable Collateral로 바꾼다</h2>
+  <div class="flow"><div class="node">US Treasury</div><div class="arrow">→</div><div class="node">Ondo OUSG</div><div class="arrow">→</div><div class="node">Blockchain 금융 네트워크</div></div>
+  <div class="grid2"><div class="card"><h3>Issuer</h3><p>국채 기반 온체인 상품을 발행</p></div><div class="card"><h3>Bridge Layer</h3><p>전통 금융 담보와 블록체인 정산망을 연결</p></div></div>
+</section>
+
+<section class="slide" data-title="Mastercard MTN">
+  <div class="eyebrow">Mastercard MTN</div>
+  <h2>Mastercard는 카드망에서 Digital Asset Network로 이동 중</h2>
+  <div class="split"><div class="card"><h3>과거</h3><p class="big">카드 결제 네트워크</p></div><div class="card"><h3>현재 확장</h3><p class="big">Multi-Token Network<br><span class="muted">토큰화 자산의 연결·검증·정산 orchestration</span></p></div></div>
+</section>
+
+<section class="slide" data-title="Ripple / XRPL">
+  <div class="eyebrow">Ripple / XRPL</div>
+  <h2>XRP보다 중요한 것은 XRPL의 역할</h2>
+  <div class="grid2"><div class="card"><h3>L0 인식</h3><p>“XRP 코인 가격”</p></div><div class="card"><h3>L1 구조</h3><p>Settlement rail · Cross-border liquidity layer · Institutional transaction network</p></div></div>
+  <p class="quote">자산 이름보다 금융 네트워크 안에서의 역할을 봐야 한다.</p>
+</section>
+
+<section class="slide" data-title="JPMorgan Kinexys">
+  <div class="eyebrow">JPMorgan Kinexys</div>
+  <h2>전통 은행과 퍼블릭 블록체인의 접점</h2>
+  <div class="three"><div class="card"><h3>은행</h3><p>규제·계좌·유동성</p></div><div class="card"><h3>Kinexys</h3><p>기관용 정산 인프라</p></div><div class="card"><h3>Public Chain</h3><p>XRPL 같은 외부 네트워크와 연결</p></div></div>
+</section>
+
+<section class="slide" data-title="실험 구조">
+  <div class="eyebrow">Case Study</div>
+  <h2>Ondo + Mastercard + Ripple + JPMorgan 실험 구조</h2>
+  <div class="flow"><div class="node">OUSG</div><div class="arrow">→</div><div class="node">XRPL</div><div class="arrow">→</div><div class="node">Mastercard MTN</div><div class="arrow">→</div><div class="node">JPM Kinexys</div><div class="arrow">→</div><div class="node">USD Settlement</div></div>
+  <p class="muted big">토큰화 국채의 상환과 실제 은행 달러 정산을 하나의 흐름으로 연결하는 실험.</p>
+</section>
+
+<section class="slide" data-title="기존 vs 새로운 구조">
+  <div class="eyebrow">Before / After</div>
+  <h2>기존 금융 vs 새로운 금융</h2>
+  <div class="table-card card"><table><tr><th>기존 구조</th><th>새로운 구조</th></tr><tr><td>SWIFT·중개은행</td><td>Blockchain settlement rail</td></tr><tr><td>T+1 / T+2</td><td>Near real-time</td></tr><tr><td>은행 영업시간</td><td>24/7</td></tr><tr><td>국가별 ledger</td><td>공유 인프라</td></tr><tr><td>수동 reconciliation</td><td>자동 검증·정산</td></tr></table></div>
+</section>
+
+<section class="slide center" data-title="Value Superhighway">
+  <div class="eyebrow">Main Concept</div>
+  <div class="mega"><span class="accent">Value</span> Superhighway</div>
+  <p class="big">정보가 인터넷을 타고 이동하듯, 달러·국채·담보·금융계약이 네트워크 위에서 이동하는 구조.</p>
+  <div><span class="pill">Value</span><span class="pill">Settlement</span><span class="pill">Collateral</span><span class="pill">Compliance</span></div>
+</section>
+
+<section class="slide" data-title="L0 L1 L2">
+  <div class="eyebrow">WWAI Lens</div>
+  <h2>L0 → L1 → L2로 보면 명확해진다</h2>
+  <div class="three"><div class="card"><h3>L0</h3><p>코인, 가격, 뉴스, 밈</p></div><div class="card"><h3>L1</h3><p>Settlement rail, collateral network, liquidity role</p></div><div class="card"><h3>L2</h3><p>Decision, routing, governance</p></div></div>
+  <p class="quote">“무슨 자산인가?”보다 “금융 시스템에서 어떤 역할인가?”를 묻는다.</p>
+</section>
+
+<section class="slide" data-title="은행의 미래">
+  <div class="eyebrow">Banking Strategy</div>
+  <h2>은행은 사라지는가? 아니다. 역할이 바뀐다.</h2>
+  <div class="split"><div class="card"><h3>과거 은행</h3><p class="big">Ledger Owner</p></div><div class="card"><h3>미래 은행</h3><ul><li>Compliance layer</li><li>Liquidity provider</li><li>Custody</li><li>Regulated settlement</li></ul></div></div>
+</section>
+
+<section class="slide" data-title="AI와 결합">
+  <div class="eyebrow">AI Finance</div>
+  <h2>AI는 Value Superhighway 위에서 의사결정을 연결한다</h2>
+  <div class="diagram"><div class="ring r3">Value Network<br><span class="mini">자산·담보·정산</span></div><div class="ring r2">Information Network<br><span class="mini">뉴스·데이터·리서치</span></div><div class="ring r1">Intelligence Network<br><span class="mini">AI 추론·거버넌스</span></div></div>
+</section>
+
+<section class="slide" data-title="학생 핵심 개념">
+  <div class="eyebrow">Teaching Framework</div>
+  <h2>학생들이 반드시 이해해야 할 5개 개념</h2>
+  <div class="grid2"><div class="card"><h3>1. Ledger</h3><p>소유권 기록</p></div><div class="card"><h3>2. Settlement</h3><p>진짜 정산이 끝나는 순간</p></div><div class="card"><h3>3. Collateral</h3><p>금융 시스템을 지탱하는 담보</p></div><div class="card"><h3>4. Tokenization</h3><p>ownership ledger의 변화</p></div></div>
+  <p class="pill">5. Network Effects: 왜 대형 기관들이 연결되는가?</p>
+</section>
+
+<section class="slide" data-title="토론 질문">
+  <div class="eyebrow">Discussion</div>
+  <h2>토론 질문</h2>
+  <div class="stack"><div class="card">Stablecoin은 은행을 약화시키는가, 강화시키는가?</div><div class="card">Tokenized Treasury는 금융위험을 줄이는가, 새 위험을 만드는가?</div><div class="card">Real-time settlement는 시장 안정성을 높이는가?</div><div class="card">한국 금융회사는 어떤 전략을 가져야 하는가?</div></div>
+</section>
+
+<section class="slide center" data-title="마지막 메시지">
+  <div class="eyebrow">Takeaway</div>
+  <h2>한 줄 요약</h2>
+  <p class="quote" style="max-width:980px;text-align:left">인터넷이 정보 이동을 혁신했다면, blockchain은 가치 이동을 혁신하려 하고, AI는 지능 이동을 혁신하려 한다.</p>
+</section>
+
+<section class="slide center" data-title="End">
+  <div class="eyebrow">End</div>
+  <h1>Thank You</h1>
+  <p class="big">Value Superhighway는 단순 crypto trend가 아니라<br>글로벌 금융 인프라 재구성 과정이다.</p>
+  <p class="mini"><span class="kbd">←</span> <span class="kbd">→</span> 이동 · <span class="kbd">목차</span> 점프</p>
+</section>
+
+</div>
+<div class="controls"><button class="btn" id="prev">← 이전</button><button class="btn" id="next">다음 →</button></div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];let idx=0;const progress=document.getElementById('progress');const drawer=document.getElementById('drawer');
+function show(i){idx=Math.max(0,Math.min(slides.length-1,i));slides.forEach((s,n)=>{s.classList.toggle('active',n===idx);let old=s.querySelector('.slideNo');if(old)old.remove();let no=document.createElement('div');no.className='slideNo';no.textContent=(n+1)+' / '+slides.length;s.appendChild(no);});progress.style.width=((idx+1)/slides.length*100)+'%';[...drawer.children].forEach((x,n)=>x.classList.toggle('current',n===idx));}
+slides.forEach((s,n)=>{const item=document.createElement('div');item.className='tocItem';item.textContent=String(n+1).padStart(2,'0')+' · '+(s.dataset.title||'Slide');item.onclick=()=>{show(n);drawer.classList.remove('open')};drawer.appendChild(item);});
+document.getElementById('next').onclick=()=>show(idx+1);document.getElementById('prev').onclick=()=>show(idx-1);document.getElementById('tocBtn').onclick=()=>drawer.classList.toggle('open');
+document.addEventListener('keydown',e=>{if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();show(idx+1)} if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();show(idx-1)} if(e.key==='Home')show(0); if(e.key==='End')show(slides.length-1); if(e.key.toLowerCase()==='m')drawer.classList.toggle('open');});
+let startX=null;document.addEventListener('touchstart',e=>startX=e.touches[0].clientX);document.addEventListener('touchend',e=>{if(startX===null)return;let dx=e.changedTouches[0].clientX-startX;if(Math.abs(dx)>60)show(idx+(dx<0?1:-1));startX=null;});
+show(0);
+</script>
+</body>
+</html>
